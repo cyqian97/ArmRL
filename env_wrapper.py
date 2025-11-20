@@ -27,7 +27,8 @@ class RobosuiteImageWrapper(gym.Env):
     Extracts only the front camera image as observation
     """
     def __init__(self, env_name="PickPlaceCan", robots=["Panda"],
-                 camera_height=84, camera_width=84, horizon=200):
+                 camera_height=84, camera_width=84, horizon=200,
+                 use_object_obs=False, use_camera_obs=True,):
         super(RobosuiteImageWrapper, self).__init__()
 
         # Load controller config
@@ -43,8 +44,8 @@ class RobosuiteImageWrapper(gym.Env):
             has_offscreen_renderer=True,
             control_freq=20,
             horizon=horizon,
-            use_object_obs=False,
-            use_camera_obs=True,
+            use_object_obs=use_object_obs,
+            use_camera_obs=use_camera_obs,
             camera_names="frontview",
             camera_heights=camera_height,
             camera_widths=camera_width,

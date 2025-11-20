@@ -19,13 +19,10 @@ class TrainingConfig:
         robots=["Panda"],
         horizon=200,
         control_freq=20,
-
-        # Parallel environments (MOST EFFECTIVE for speedup)
-        n_envs=8,  # Adjust based on CPU cores (8-32 recommended)
-
-        # Image settings (smaller = faster)
         camera_height=84,  # 84 is standard, try 64 for more speed
         camera_width=84,
+        use_object_obs=False, 
+        use_camera_obs=True,
 
         # PPO hyperparameters
         learning_rate=3e-4,
@@ -37,17 +34,12 @@ class TrainingConfig:
         clip_range=0.2,
         ent_coef=0.001,
 
-        # Device
+        # Training settings
+        n_envs=8,  
         device="cuda",  # "cuda" for GPU, "cpu" for CPU
-
-        # Training
         total_timesteps=500000,
-
-        # Callbacks
-        save_freq=10000,
+        save_freq=10000, # Callbacks frequencies
         eval_freq=5000,
-
-        # Paths
         model_save_path="./models/",
         log_path="./logs/",
         tensorboard_log="./tensorboard_logs/",
@@ -57,13 +49,10 @@ class TrainingConfig:
         self.robots = robots
         self.horizon = horizon
         self.control_freq = control_freq
-
-        # Parallel environments
-        self.n_envs = n_envs
-
-        # Image settings
         self.camera_height = camera_height
         self.camera_width = camera_width
+        self.use_object_obs = use_object_obs
+        self.use_camera_obs = use_camera_obs
 
         # PPO hyperparameters
         self.learning_rate = learning_rate
@@ -75,17 +64,12 @@ class TrainingConfig:
         self.clip_range = clip_range
         self.ent_coef = ent_coef
 
-        # Device
-        self.device = device
-
-        # Training
+        # Training parameters
+        self.device = device        
+        self.n_envs = n_envs
         self.total_timesteps = total_timesteps
-
-        # Callbacks
         self.save_freq = save_freq
         self.eval_freq = eval_freq
-
-        # Paths
         self.model_save_path = model_save_path
         self.log_path = log_path
         self.tensorboard_log = tensorboard_log
@@ -95,22 +79,40 @@ class TrainingConfig:
         return f"""
 Training Configuration:
 =======================
-Environment: {self.env_name}
-Parallel Envs: {self.n_envs}
-Image Size: {self.camera_height}x{self.camera_width}
-Horizon: {self.horizon}
-Device: {self.device}
+
+Environment Settings:
+  Environment Name: {self.env_name}
+  Robots: {self.robots}
+  Horizon: {self.horizon}
+  Control Frequency: {self.control_freq} Hz
+  Camera Height: {self.camera_height}
+  Camera Width: {self.camera_width}
+  Image Size: {self.camera_height}x{self.camera_width}
+  Use Object Obs: {self.use_object_obs}
+  Use Camera Obs: {self.use_camera_obs}
 
 PPO Hyperparameters:
   Learning Rate: {self.learning_rate}
-  Steps per Update: {self.n_steps} x {self.n_envs} = {self.n_steps * self.n_envs}
+  N Steps: {self.n_steps}
+  Steps per Update: {self.n_steps} x {self.n_envs} = {self.n_steps * self.n_envs:,}
   Batch Size: {self.batch_size}
-  Epochs: {self.n_epochs}
+  N Epochs: {self.n_epochs}
+  Gamma: {self.gamma}
+  GAE Lambda: {self.gae_lambda}
+  Clip Range: {self.clip_range}
+  Entropy Coefficient: {self.ent_coef}
 
-Training:
+Training Settings:
+  Device: {self.device}
+  Parallel Envs: {self.n_envs}
   Total Timesteps: {self.total_timesteps:,}
   Save Frequency: {self.save_freq:,}
   Eval Frequency: {self.eval_freq:,}
+
+Paths:
+  Model Save Path: {self.model_save_path}
+  Log Path: {self.log_path}
+  TensorBoard Log: {self.tensorboard_log}
 """
 
 
