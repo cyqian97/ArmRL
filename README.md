@@ -62,6 +62,24 @@ python test_env.py --help
 tensorboard --logdir ./tensorboard_logs/
 ```
 
+## Test Trained Models
+
+After training, test your model and save a video:
+
+```bash
+# Test the trained model (auto-detects algorithm)
+python test_model.py --model ppo_pickplace_final.zip
+
+# Run multiple episodes
+python test_model.py --model sac_pickplace_final.zip --episodes 5
+
+# Custom video name
+python test_model.py --model ppo_pickplace_final.zip --video my_test.mp4
+
+# Test checkpoint model
+python test_model.py --model models/ppo_pickplace_10000_steps.zip
+```
+
 ## Complete Documentation
 
 See **[GUIDE.md](GUIDE.md)** for:
@@ -82,6 +100,7 @@ See **[GUIDE.md](GUIDE.md)** for:
 ## Files
 
 - `test_env.py` - Main training script
+- `test_model.py` - Test trained models and save videos
 - `training_config.py` - Configuration classes
 - `GUIDE.md` - Complete training guide
 - `README.md` - This file

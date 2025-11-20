@@ -1,0 +1,57 @@
+Test Trained Models - Usage Guide
+==================================
+
+Basic Usage:
+-----------
+python test_model.py --model <model_file.zip>
+
+Examples:
+---------
+# Test the trained model (auto-detects PPO/SAC/TD3)
+python test_model.py --model ppo_pickplace_final.zip
+
+# Run 5 episodes instead of default 3
+python test_model.py --model sac_pickplace_final.zip --episodes 5
+
+# Custom video filename
+python test_model.py --model ppo_pickplace_final.zip --video my_test.mp4
+
+# Test checkpoint model
+python test_model.py --model models/ppo_pickplace_10000_steps.zip
+
+# Different environment
+python test_model.py --model ppo_pickplace_final.zip --env_name Stack
+
+# Match training image size (if you used different size)
+python test_model.py --model ppo_pickplace_final.zip --camera_height 64 --camera_width 64
+
+Arguments:
+----------
+--model             Path to trained model (.zip file) [REQUIRED]
+--env_name          Environment name (default: PickPlaceCan)
+--episodes          Number of test episodes (default: 3)
+--camera_height     Image height, should match training (default: 84)
+--camera_width      Image width, should match training (default: 84)
+--horizon           Episode length (default: 200)
+--video             Output video filename (default: auto-generated)
+--deterministic     Use deterministic actions (default: True)
+--fps               Video FPS (default: 20)
+
+What It Does:
+------------
+1. Loads your trained model
+2. Auto-detects algorithm (PPO/SAC/TD3) from filename
+3. Runs the model for specified number of episodes
+4. Collects frames from all episodes
+5. Saves a video showing the robot's behavior
+6. Prints statistics (average reward, episode length)
+
+Output:
+-------
+- Video file (e.g., ppo_pickplace_final_test.mp4)
+- Statistics printed to console
+- Shows reward and length for each episode
+
+For full help:
+--------------
+python test_model.py --help

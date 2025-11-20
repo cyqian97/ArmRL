@@ -13,79 +13,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecTran
 import imageio
 from training_config import TrainingConfig, FastTrainingConfig, HighQualityConfig, CPUOnlyConfig
 
-
-class RobosuiteImageWrapper(gym.Env):
-    """
-    Wrapper to make Robosuite environment compatible with stable-baselines3
-    Extracts only the front camera image as observation
-    """
-    def __init__(self, env_name="PickPlaceCan", robots=["Panda"],
-                 camera_height=84, camera_width=84, horizon=200):
-        super(RobosuiteImageWrapper, self).__init__()
-
-        # Load controller config
-        controller_config = load_composite_controller_config(controller="BASIC")
-
-        # Create the robosuite environment
-        self.env = suite.make(
-            env_name,
-            robots=robots,
-            gripper_types="default",
-            controller_configs=controller_config,
-            has_renderer=False,
-            has_offscreen_renderer=True,
-            control_freq=20,
-            horizon=horizon,
-            use_object_obs=False,
-            use_camera_obs=True,
-            camera_names="frontview",
-            camera_heights=camera_height,
-            camera_widths=camera_width,
-            reward_shaping=True,
-        )
-
-        # Define action space
-        low, high = self.env.action_spec
-        self.action_space = spaces.Box(low=low, high=high, dtype=np.float32)
-
-        # Define observation space (image: H x W x 3, RGB, values 0-255)
-        self.observation_space = spaces.Box(
-            low=0,
-            high=255,
-            shape=(camera_height, camera_width, 3),
-            dtype=np.uint8
-        )
-
-        self.camera_name = "frontview_image"
-
-    def reset(self, seed=None, options=None):
-        """Reset the environment"""
-        obs = self.env.reset()
-        image_obs = obs[self.camera_name]
-        return image_obs, {}
-
-    def step(self, action):
-        """Take a step in the environment"""
-        obs, reward, done, info = self.env.step(action)
-        image_obs = obs[self.camera_name]
-
-        # Gymnasium expects (obs, reward, terminated, truncated, info)
-        terminated = done
-        truncated = False
-
-        return image_obs, reward, terminated, truncated, info
-
-    def render(self, mode='rgb_array'):
-        """Render the environment"""
-        if mode == 'rgb_array':
-            obs = self.env._get_observations()
-            return obs[self.camera_name]
-        return None
-
-    def close(self):
-        """Close the environment"""
-        self.env.close()
-
+from env_wrapper import RobosuiteImageWrapper
 
 def make_env(config):
     """Factory function to create environment"""
@@ -365,6 +293,7 @@ if __name__ == "__main__":
 
         # Get the frame for visualization
         frame = env.get_images()[0]
+        frame = np.flipud(frame)  # Flip image vertically
         frames.append(frame)
 
         if dones[0]:

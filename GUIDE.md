@@ -126,7 +126,7 @@ python test_env.py --algo td3 --n_envs 4 --total_timesteps 1000000
 - `--gamma` - Discount factor (default: 0.99)
 - `--gae_lambda` - GAE lambda (default: 0.95)
 - `--clip_range` - PPO clip range (default: 0.2)
-- `--ent_coef` - Entropy coefficient (default: 0.01)
+- `--ent_coef` - Entropy coefficient (default: 0.001)
 
 ### SAC/TD3 Settings (hardcoded in code)
 - `buffer_size: 100000` - Replay buffer size
