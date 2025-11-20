@@ -11,5 +11,6 @@ pip install robosuite
 pip install "imageio[ffmpeg]"  # For saving videos
 pip install opencv-python  # For camera observations
 pip install gym
-pip install stable-baselines3  # If training RL agents
+pip install stable-baselines3[extra]  # If training RL agents
+pip install tensorboard
 ```
