@@ -7,8 +7,9 @@ import robosuite as suite
 from robosuite.controllers import load_composite_controller_config
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
-from stable_baselines3.common.vec_env import DummyVecEnv, VecTransposeImage
+from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecTransposeImage
 import imageio
+from training_config import TrainingConfig, FastTrainingConfig, HighQualityConfig
 
 
 class RobosuiteImageWrapper(gym.Env):
@@ -84,43 +85,59 @@ class RobosuiteImageWrapper(gym.Env):
         self.env.close()
 
 
-def make_env():
+def make_env(config):
     """Factory function to create environment"""
     def _init():
         return RobosuiteImageWrapper(
-            env_name="PickPlaceCan",
-            robots=["Panda"],
-            camera_height=84,  # Smaller images for faster training
-            camera_width=84,
-            horizon=200
+            env_name=config.env_name,
+            robots=config.robots,
+            camera_height=config.camera_height,
+            camera_width=config.camera_width,
+            horizon=config.horizon
         )
     return _init
 
 
 if __name__ == "__main__":
-    # Create the environment
-    print("Creating environment...")
-    env = DummyVecEnv([make_env()])
+    # ===== CHOOSE YOUR CONFIGURATION =====
+    # Option 1: Default config (balanced)
+    config = TrainingConfig()
+
+    # Option 2: Fast training (use this for quick experiments)
+    # config = FastTrainingConfig()
+
+    # Option 3: High quality (use this for final training)
+    # config = HighQualityConfig()
+
+    # Option 4: Custom config
+    # config = TrainingConfig(n_envs=16, camera_height=64, total_timesteps=1000000)
+
+    # Print configuration
+    print(config)
+
+    # Create the environment with parallel processes
+    print(f"Creating {config.n_envs} parallel environments...")
+    env = SubprocVecEnv([make_env(config) for _ in range(config.n_envs)])
 
     # VecTransposeImage transposes images from (H, W, C) to (C, H, W) for CNN
     env = VecTransposeImage(env)
 
-    # Create evaluation environment
-    eval_env = DummyVecEnv([make_env()])
+    # Create evaluation environment (single env is fine)
+    eval_env = DummyVecEnv([make_env(config)])
     eval_env = VecTransposeImage(eval_env)
 
     # Set up callbacks
     checkpoint_callback = CheckpointCallback(
-        save_freq=10000,
-        save_path='./models/',
+        save_freq=config.save_freq,
+        save_path=config.model_save_path,
         name_prefix='ppo_pickplace'
     )
 
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path='./models/best_model',
-        log_path='./logs/',
-        eval_freq=5000,
+        best_model_save_path=f'{config.model_save_path}best_model',
+        log_path=config.log_path,
+        eval_freq=config.eval_freq,
         deterministic=True,
         render=False
     )
@@ -131,21 +148,22 @@ if __name__ == "__main__":
         "CnnPolicy",
         env,
         verbose=1,
-        tensorboard_log="./tensorboard_logs/",
-        learning_rate=3e-4,
-        n_steps=2048,
-        batch_size=64,
-        n_epochs=10,
-        gamma=0.99,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        ent_coef=0.01,
+        tensorboard_log=config.tensorboard_log,
+        learning_rate=config.learning_rate,
+        n_steps=config.n_steps,
+        batch_size=config.batch_size,
+        n_epochs=config.n_epochs,
+        gamma=config.gamma,
+        gae_lambda=config.gae_lambda,
+        clip_range=config.clip_range,
+        ent_coef=config.ent_coef,
+        device=config.device,
     )
 
     # Train the model
     print("Starting training...")
     model.learn(
-        total_timesteps=500000,
+        total_timesteps=config.total_timesteps,
         callback=[checkpoint_callback, eval_callback],
         progress_bar=True
     )
