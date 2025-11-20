@@ -1,87 +1,87 @@
-# ArmRL - PPO Training for Robotic Manipulation
+# ArmRL - RL Training for Robotic Manipulation
 
-Train PPO agents with image observations for robotic manipulation tasks using Robosuite and stable-baselines3.
+Train RL agents (PPO, SAC, TD3) with image observations for robotic manipulation tasks using Robosuite and stable-baselines3.
+
+**Supported Algorithms:** PPO | SAC | TD3
 
 ## Installation
 
 ```bash
 apt-get update -y
 apt-get install -y libglib2.0-0
-```
 
-```bash
 conda create -n armrl python=3.12 -y
 conda activate armrl
-pip install mujoco
-pip install robosuite
-pip install "imageio[ffmpeg]"  # For saving videos
-pip install opencv-python  # For camera observations
-pip install gymnasium
-pip install stable-baselines3[extra]  # For training RL agents
-pip install tensorboard
+pip install mujoco robosuite "imageio[ffmpeg]" opencv-python
+pip install gymnasium stable-baselines3[extra] tensorboard
 ```
 
 ## Quick Start
 
-### 1. Default Training
 ```bash
+# Default training (PPO)
 python test_env.py
-```
 
-### 2. Use Presets
-```bash
-# Fast training (quick experiments)
-python test_env.py --preset fast
+# Try different algorithms
+python test_env.py --algo sac    # Sample efficient
+python test_env.py --algo td3    # Deterministic
 
-# High quality (final training)
-python test_env.py --preset high_quality
+# Use presets
+python test_env.py --preset fast           # Quick experiments
+python test_env.py --preset high_quality   # Best results
 
-# CPU-only
-python test_env.py --preset cpu
-```
+# Custom configuration
+python test_env.py --algo sac --n_envs 4 --total_timesteps 1000000
+python test_env.py --algo ppo --n_envs 32 --camera_height 64
 
-### 3. Custom Configuration
-```bash
-# 16 parallel environments with smaller images
-python test_env.py --n_envs 16 --camera_height 64
-
-# Train for 1 million steps
-python test_env.py --total_timesteps 1000000
-
-# Maximum speed (with 64 CPU cores)
-python test_env.py --n_envs 32 --camera_height 64 --horizon 100
-```
-
-## View All Options
-```bash
+# View all options
 python test_env.py --help
 ```
+
+## Algorithm Comparison
+
+| Algorithm | Best For | Parallel Envs | Sample Efficiency | Stability |
+|-----------|----------|---------------|-------------------|-----------|
+| **PPO** | General purpose, beginners | 8-32 | Medium ⭐⭐ | High ⭐⭐⭐ |
+| **SAC** | Sample efficiency | 4-8 | High ⭐⭐⭐ | High ⭐⭐⭐ |
+| **TD3** | Deterministic control | 4-8 | High ⭐⭐⭐ | Medium ⭐⭐ |
+
+## Key Parameters
+
+| Parameter | Description | Default | Options |
+|-----------|-------------|---------|---------|
+| `--algo` | RL algorithm | ppo | ppo, sac, td3 |
+| `--preset` | Preset config | None | fast, high_quality, cpu |
+| `--n_envs` | Parallel environments | 8 | 4-32 |
+| `--camera_height` | Image height | 84 | 64/84/128 |
+| `--total_timesteps` | Training steps | 500,000 | Any |
+| `--device` | Computing device | cuda | cuda/cpu |
 
 ## Monitor Training
 ```bash
 tensorboard --logdir ./tensorboard_logs/
 ```
 
-## Documentation
+## Complete Documentation
 
-- [QUICK_START.md](QUICK_START.md) - Quick reference with examples
-- [USAGE.md](USAGE.md) - Detailed usage guide with all parameters
-- `./compare_configs.sh` - Compare different configurations
+See **[GUIDE.md](GUIDE.md)** for:
+- Detailed algorithm explanations
+- All command-line arguments
+- Performance optimization tips
+- Training examples
+- Troubleshooting
 
-## Key Parameters
+## Recommendations
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `--preset` | Use preset config (fast/high_quality/cpu) | None |
-| `--n_envs` | Number of parallel environments | 8 |
-| `--camera_height` | Image height (64/84/128) | 84 |
-| `--n_steps` | Steps per env per update | 512 |
-| `--total_timesteps` | Total training steps | 500,000 |
-| `--device` | cuda or cpu | cuda |
+**Beginner?** → `python test_env.py --preset fast`
+
+**Sample efficient?** → `python test_env.py --algo sac --n_envs 4 --total_timesteps 1000000`
+
+**Maximum speed?** → `python test_env.py --algo ppo --n_envs 32 --camera_height 64`
 
 ## Files
 
-- `test_env.py` - Main training script with CLI support
+- `test_env.py` - Main training script
 - `training_config.py` - Configuration classes
-- `example_configs.py` - View all preset configurations
-- `show_help.py` - Display help without loading dependencies
+- `GUIDE.md` - Complete training guide
+- `README.md` - This file
