@@ -158,28 +158,7 @@ class CPUOnlyConfig(TrainingConfig):
 # OPTIMIZATION NOTES
 # ====================
 """
-Expected Speedups:
-------------------
-Baseline (1 env, 256x256, CPU): 1x
-- 8 parallel envs: ~6-8x faster
-- 16 parallel envs: ~12-15x faster
-- 84x84 images: ~3-4x faster
-- 64x64 images: ~6-8x faster
-- GPU acceleration: ~2-3x faster
-Combined (16 envs, 64x64, GPU): ~40-60x faster!
-
 Memory Usage:
 -------------
-- 1 env @ 84x84: ~200MB
-- 8 envs @ 84x84: ~1.6GB
-- 16 envs @ 84x84: ~3.2GB
-- 16 envs @ 64x64: ~1.8GB
-
-Tips:
------
-1. Start with n_envs=8, increase if you have CPU cores available
-2. Use 64x64 images if training is too slow
-3. Reduce horizon to 100 for faster episodes
-4. Use FastTrainingConfig() for quick experiments
-5. Use HighQualityConfig() for final training runs
-"""
+- Main thread: MEM~8GB, GPU~3GB
+- Each env instance: MEM~4GB, GPU~1GB
