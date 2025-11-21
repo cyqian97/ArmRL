@@ -16,3 +16,11 @@ train:
   total_timesteps: 500000
   save_freq: 20000
   eval_freq: 10000
+
+test:
+  model_path: "./models/best_model/best_model.zip"
+  n_episodes: 5
+  deterministic: true
+  save_video: true
+  result_path: "./videos/"
+  video_fps: 20

@@ -2,213 +2,149 @@
 Test a trained RL model and save a video
 
 Usage:
-    python test_model.py --model ppo_pickplace_final.zip
-    python test_model.py --model sac_pickplace_final.zip --episodes 5
-    python test_model.py --model models/ppo_pickplace_10000_steps.zip --video my_test.mp4
+    python test_model.py --config configs/fast.yaml
+    python test_model.py --config configs/high_quality.yaml
 """
 import os
-import numpy as np
+import shutil
 import argparse
-from stable_baselines3 import PPO, SAC, TD3
 import imageio
+import numpy as np
+from stable_baselines3 import PPO, SAC, TD3
 
 from env_wrapper import RobosuiteImageWrapper
+from config import EnvConfig, TestConfig, load_config_from_yaml
 
 
-def detect_algorithm(model_path):
+def make_env(env_cfg: EnvConfig):
+    """Factory function to create environment"""
+    return RobosuiteImageWrapper(
+        env_name=env_cfg.env_name,
+        robots=env_cfg.robots,
+        horizon=env_cfg.horizon,
+        control_freq=env_cfg.control_freq,
+        camera_height=env_cfg.camera_height,
+        camera_width=env_cfg.camera_width,
+        use_camera_obs=env_cfg.use_camera_obs,
+        use_object_obs=env_cfg.use_object_obs,
+    )
+
+
+def detect_algorithm(model_path: str):
     """Detect which algorithm was used based on model path"""
     model_name = model_path.lower()
-    if 'ppo' in model_name:
-        return 'ppo', PPO
-    elif 'sac' in model_name:
-        return 'sac', SAC
-    elif 'td3' in model_name:
-        return 'td3', TD3
+    if "ppo" in model_name:
+        return "PPO", PPO
+    elif "sac" in model_name:
+        return "SAC", SAC
+    elif "td3" in model_name:
+        return "TD3", TD3
     else:
         # Default to PPO if can't detect
         print("Warning: Could not detect algorithm from filename, assuming PPO")
-        return 'ppo', PPO
+        return "PPO", PPO
 
 
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(
-        description='Test a trained RL model and save video',
+        description="Test a trained RL model and save video",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Test default model
-  python test_model.py --model ppo_pickplace_final.zip
+  # Test with config file
+  python test_model.py --config configs/fast.yaml
 
-  # Test with custom settings
-  python test_model.py --model sac_pickplace_final.zip --episodes 5 --video sac_test.mp4
-
-  # Test checkpoint model
-  python test_model.py --model models/ppo_pickplace_10000_steps.zip
-
-  # Different environment
-  python test_model.py --model ppo_pickplace_final.zip --env_name Stack
-        """
+  # Test with different config
+  python test_model.py --config configs/high_quality.yaml
+        """,
     )
 
     parser.add_argument(
-        '--model',
+        "--config",
         type=str,
         required=True,
-        help='Path to trained model (.zip file)'
-    )
-
-    parser.add_argument(
-        '--env_name',
-        type=str,
-        default='PickPlaceCan',
-        help='Robosuite environment name (default: PickPlaceCan)'
-    )
-
-    parser.add_argument(
-        '--episodes',
-        type=int,
-        default=3,
-        help='Number of episodes to run (default: 3)'
-    )
-
-    parser.add_argument(
-        '--camera_height',
-        type=int,
-        default=84,
-        help='Camera height (should match training, default: 84)'
-    )
-
-    parser.add_argument(
-        '--camera_width',
-        type=int,
-        default=84,
-        help='Camera width (should match training, default: 84)'
-    )
-
-    parser.add_argument(
-        '--horizon',
-        type=int,
-        default=200,
-        help='Episode length (default: 200)'
-    )
-
-    parser.add_argument(
-        '--video',
-        type=str,
-        default=None,
-        help='Output video filename (default: auto-generated based on model name)'
-    )
-
-    parser.add_argument(
-        '--deterministic',
-        action='store_true',
-        default=True,
-        help='Use deterministic actions (default: True)'
-    )
-
-    parser.add_argument(
-        '--fps',
-        type=int,
-        default=20,
-        help='Video FPS (default: 20)'
+        help="Path to YAML configuration file",
     )
 
     return parser.parse_args()
 
 
-def main():
-    args = parse_args()
 
+def run_test(config_path):
+    """Run testing of a trained model"""
+    # Load configuration from YAML
+    env_cfg, alg_cfg, train_cfg, test_cfg = load_config_from_yaml(config_path)
+    
     # Check if model file exists
-    if not os.path.exists(args.model):
-        print(f"Error: Model file '{args.model}' not found!")
+    if not os.path.exists(test_cfg.model_path):
+        print(f"Error: Model file '{test_cfg.model_path}' not found!")
         return
 
     # Detect algorithm from model path
-    algo_name, AlgoClass = detect_algorithm(args.model)
-    print(f"Detected algorithm: {algo_name.upper()}")
+    algo_name, AlgoClass = detect_algorithm(test_cfg.model_path)
+    print(f"Detected algorithm: {algo_name}")
 
-    # Generate video filename if not provided
-    if args.video is None:
-        model_basename = os.path.splitext(os.path.basename(args.model))[0]
-        args.video = f"{model_basename}_test.mp4"
+    # Generate video filename
+    model_basename = os.path.splitext(os.path.basename(test_cfg.model_path))[0]
+    video_filename = os.path.join(test_cfg.result_path, f"{model_basename}.mp4")
+
+    # Create video directory if needed
+    os.makedirs(test_cfg.result_path, exist_ok=True)
 
     print(f"\n{'='*60}")
-    print(f"Testing Model: {args.model}")
-    print(f"Algorithm: {algo_name.upper()}")
-    print(f"Environment: {args.env_name}")
-    print(f"Episodes: {args.episodes}")
-    print(f"Image Size: {args.camera_height}x{args.camera_width}")
-    print(f"Output Video: {args.video}")
+    print(f"Testing Model: {test_cfg.model_path}")
+    print(f"Algorithm: {algo_name}")
+    print(f"Environment: {env_cfg.env_name}")
+    print(f"Episodes: {test_cfg.n_episodes}")
+    print(f"Image Size: {env_cfg.camera_height}x{env_cfg.camera_width}")
+    print(f"Output Video: {video_filename}")
     print(f"{'='*60}\n")
 
     # Load the trained model
     print("Loading model...")
-    try:
-        model = AlgoClass.load(args.model)
-        print("✓ Model loaded successfully!")
-    except Exception as e:
-        print(f"Error loading model: {e}")
-        print("\nTrying other algorithms...")
-        # Try other algorithms if detection failed
-        for name, cls in [('PPO', PPO), ('SAC', SAC), ('TD3', TD3)]:
-            try:
-                print(f"  Trying {name}...")
-                model = cls.load(args.model)
-                algo_name = name.lower()
-                print(f"✓ Model loaded successfully as {name}!")
-                break
-            except:
-                continue
-        else:
-            print("Error: Could not load model with any algorithm!")
-            return
-
+    model = AlgoClass.load(test_cfg.model_path, device=test_cfg.device)
+    print("Model loaded successfully!")
+    
     # Create environment
     print("\nCreating environment...")
-    env = RobosuiteImageWrapper(
-        env_name=args.env_name,
-        robots=["Panda"],
-        camera_height=args.camera_height,
-        camera_width=args.camera_width,
-        horizon=args.horizon
-    )
-    print("✓ Environment created!")
+    env = make_env(env_cfg)
+    print("Environment created!")
 
     # Test the model
-    print(f"\nRunning {args.episodes} test episodes...")
+    print(f"\nRunning {test_cfg.n_episodes} test episodes...")
     all_frames = []
     episode_rewards = []
     episode_lengths = []
 
-    for episode in range(args.episodes):
+    for episode in range(test_cfg.n_episodes):
         obs, _ = env.reset()
         episode_reward = 0
         episode_length = 0
         frames = []
 
-        print(f"\nEpisode {episode + 1}/{args.episodes}:")
+        print(f"\nEpisode {episode + 1}/{test_cfg.n_episodes}:")
 
-        for step in range(args.horizon):
+        for step in range(env_cfg.horizon):
             # Predict action
-            action, _states = model.predict(obs, deterministic=args.deterministic)
+            action, _states = model.predict(obs, deterministic=test_cfg.deterministic)
 
             # Take step
             obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
 
             # Get frame for video
-            frame = obs.copy()
-            frame = np.flipud(frame)  # Flip image vertically
-            frames.append(frame)
+            if test_cfg.save_video:
+                frame = obs.copy()
+                frame = np.flipud(frame)  # Flip image vertically
+                frames.append(frame)
 
             episode_reward += reward
             episode_length += 1
 
             # Print progress every 50 steps
             if (step + 1) % 50 == 0:
-                print(f"  Step {step + 1}/{args.horizon} | Reward: {episode_reward:.2f}")
+                print(f"  Step {step + 1}/{env_cfg.horizon} | Reward: {episode_reward:.2f}")
 
             if done:
                 break
@@ -217,7 +153,9 @@ def main():
         episode_lengths.append(episode_length)
         all_frames.extend(frames)
 
-        print(f"  ✓ Episode {episode + 1} complete: Reward = {episode_reward:.2f}, Length = {episode_length}")
+        print(
+            f"  Episode {episode + 1} complete: Reward = {episode_reward:.2f}, Length = {episode_length}"
+        )
 
     # Close environment
     env.close()
@@ -226,26 +164,33 @@ def main():
     print(f"\n{'='*60}")
     print("Test Results:")
     print(f"{'='*60}")
-    print(f"Episodes:           {args.episodes}")
-    print(f"Average Reward:     {np.mean(episode_rewards):.2f} ± {np.std(episode_rewards):.2f}")
+    print(f"Episodes:           {test_cfg.n_episodes}")
+    print(f"Average Reward:     {np.mean(episode_rewards):.2f} +/- {np.std(episode_rewards):.2f}")
     print(f"Min/Max Reward:     {np.min(episode_rewards):.2f} / {np.max(episode_rewards):.2f}")
-    print(f"Average Length:     {np.mean(episode_lengths):.1f} ± {np.std(episode_lengths):.1f}")
+    print(f"Average Length:     {np.mean(episode_lengths):.1f} +/- {np.std(episode_lengths):.1f}")
     print(f"Total Frames:       {len(all_frames)}")
     print(f"{'='*60}\n")
 
     # Save video
-    print(f"Saving video to '{args.video}'...")
-    try:
-        imageio.mimsave(args.video, all_frames, fps=args.fps)
-        print(f"✓ Video saved successfully!")
-        print(f"  File: {args.video}")
-        print(f"  Size: {os.path.getsize(args.video) / 1024 / 1024:.2f} MB")
-        print(f"  Duration: {len(all_frames) / args.fps:.1f} seconds")
-    except Exception as e:
-        print(f"Error saving video: {e}")
+    if test_cfg.save_video and all_frames:
+        print(f"Saving video to '{video_filename}'...")
+        try:
+            imageio.mimsave(video_filename, all_frames, fps=test_cfg.video_fps)
+            print("Video saved successfully!")
+            print(f"  File: {video_filename}")
+            print(f"  Size: {os.path.getsize(video_filename) / 1024 / 1024:.2f} MB")
+            print(f"  Duration: {len(all_frames) / test_cfg.video_fps:.1f} seconds")
+        except Exception as e:
+            print(f"Error saving video: {e}")
 
     print("\nDone!")
 
+    # Copy config file to the test result directory
+    config_filename = os.path.basename(config_path)
+    dest_config_path = os.path.join(test_cfg.result_path, config_filename)
+    shutil.copy2(config_path, dest_config_path)
+    print("Testing completed!")
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    run_test(args.config)

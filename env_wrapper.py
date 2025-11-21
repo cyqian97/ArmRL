@@ -1,4 +1,5 @@
 import os
+
 os.environ["MUJOCO_GL"] = "egl"
 
 import numpy as np
@@ -10,11 +11,12 @@ from robosuite.controllers import load_composite_controller_config
 import logging
 
 from robosuite.utils.log_utils import DefaultLogger
+
 # Create a logger, set console and file levels
 logger_obj = DefaultLogger(
     logger_name="robosuite_logs",
     console_logging_level="ERROR",  # set console to DEBUG
-    file_logging_level="ERROR"      # optionally, file logging
+    file_logging_level="ERROR",  # optionally, file logging
 )
 
 logger = logger_obj.get_logger()
@@ -26,9 +28,18 @@ class RobosuiteImageWrapper(gym.Env):
     Wrapper to make Robosuite environment compatible with stable-baselines3
     Extracts only the front camera image as observation
     """
-    def __init__(self, env_name="PickPlaceCan", robots=["Panda"],
-                 camera_height=84, camera_width=84, horizon=200,
-                 use_object_obs=False, use_camera_obs=True,):
+
+    def __init__(
+        self,
+        env_name="PickPlaceCan",
+        robots=["Panda"],
+        camera_height=84,
+        camera_width=84,
+        control_freq=20,
+        horizon=200,
+        use_object_obs=False,
+        use_camera_obs=True,
+    ):
         super(RobosuiteImageWrapper, self).__init__()
 
         # Load controller config
@@ -42,7 +53,7 @@ class RobosuiteImageWrapper(gym.Env):
             controller_configs=controller_config,
             has_renderer=False,
             has_offscreen_renderer=True,
-            control_freq=20,
+            control_freq=control_freq,
             horizon=horizon,
             use_object_obs=use_object_obs,
             use_camera_obs=use_camera_obs,
@@ -58,10 +69,7 @@ class RobosuiteImageWrapper(gym.Env):
 
         # Define observation space (image: H x W x 3, RGB, values 0-255)
         self.observation_space = spaces.Box(
-            low=0,
-            high=255,
-            shape=(camera_height, camera_width, 3),
-            dtype=np.uint8
+            low=0, high=255, shape=(camera_height, camera_width, 3), dtype=np.uint8
         )
 
         self.camera_name = "frontview_image"
@@ -83,9 +91,9 @@ class RobosuiteImageWrapper(gym.Env):
 
         return image_obs, reward, terminated, truncated, info
 
-    def render(self, mode='rgb_array'):
+    def render(self, mode="rgb_array"):
         """Render the environment"""
-        if mode == 'rgb_array':
+        if mode == "rgb_array":
             obs = self.env._get_observations()
             return obs[self.camera_name]
         return None

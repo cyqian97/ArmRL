@@ -16,3 +16,11 @@ train:
   total_timesteps: 1000000
   save_freq: 10000
   eval_freq: 5000
+
+test:
+  model_path: "./models/PPO_pickplace_final.zip"
+  n_episodes: 5
+  deterministic: true
+  save_video: true
+  result_path: "./videos/"
+  video_fps: 20

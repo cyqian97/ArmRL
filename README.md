@@ -19,43 +19,35 @@ pip install gymnasium stable-baselines3[extra] tensorboard
 ## Quick Start
 
 ```bash
-# Default training (PPO)
-python test_env.py
+# Train with a config file
+python train.py --config configs/fast.yaml
 
-# Try different algorithms
-python test_env.py --algo sac    # Sample efficient
-python test_env.py --algo td3    # Deterministic
+# Use different presets
+python train.py --config configs/high_quality.yaml
+python train.py --config configs/cpu_only.yaml
 
-# Use presets
-python test_env.py --preset fast           # Quick experiments
-python test_env.py --preset high_quality   # Best results
-
-# Custom configuration
-python test_env.py --algo sac --n_envs 4 --total_timesteps 1000000
-python test_env.py --algo ppo --n_envs 32 --camera_height 64
-
-# View all options
-python test_env.py --help
+# Test config loading
+python config.py configs/fast.yaml
 ```
+
+## Configuration
+
+Training is configured via YAML files in the `configs/` directory:
+
+| Config File | Description |
+|-------------|-------------|
+| `configs/fast.yaml` | Quick experiments (64x64 images, 16 envs) |
+| `configs/high_quality.yaml` | Best results (128x128 images, 1M steps) |
+| `configs/cpu_only.yaml` | CPU-only training |
+
 
 ## Algorithm Comparison
 
 | Algorithm | Best For | Parallel Envs | Sample Efficiency | Stability |
 |-----------|----------|---------------|-------------------|-----------|
-| **PPO** | General purpose, beginners | 8-32 | Medium ⭐⭐ | High ⭐⭐⭐ |
-| **SAC** | Sample efficiency | 4-8 | High ⭐⭐⭐ | High ⭐⭐⭐ |
-| **TD3** | Deterministic control | 4-8 | High ⭐⭐⭐ | Medium ⭐⭐ |
-
-## Key Parameters
-
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `--algo` | RL algorithm | ppo | ppo, sac, td3 |
-| `--preset` | Preset config | None | fast, high_quality, cpu |
-| `--n_envs` | Parallel environments | 8 | 4-32 |
-| `--camera_height` | Image height | 84 | 64/84/128 |
-| `--total_timesteps` | Training steps | 500,000 | Any |
-| `--device` | Computing device | cuda | cuda/cpu |
+| **PPO** | General purpose, beginners | 8-32 | Medium | High |
+| **SAC** | Sample efficiency | 4-8 | High | High |
+| **TD3** | Deterministic control | 4-8 | High | Medium |
 
 ## Monitor Training
 ```bash
@@ -84,23 +76,16 @@ python test_model.py --model models/ppo_pickplace_10000_steps.zip
 
 See **[GUIDE.md](GUIDE.md)** for:
 - Detailed algorithm explanations
-- All command-line arguments
+- All configuration options
 - Performance optimization tips
 - Training examples
 - Troubleshooting
 
-## Recommendations
-
-**Beginner?** → `python test_env.py --preset fast`
-
-**Sample efficient?** → `python test_env.py --algo sac --n_envs 4 --total_timesteps 1000000`
-
-**Maximum speed?** → `python test_env.py --algo ppo --n_envs 32 --camera_height 64`
-
 ## Files
 
-- `test_env.py` - Main training script
+- `train.py` - Main training script
 - `test_model.py` - Test trained models and save videos
-- `training_config.py` - Configuration classes
+- `config.py` - Configuration classes and YAML loader
+- `configs/` - YAML configuration presets
 - `GUIDE.md` - Complete training guide
 - `README.md` - This file

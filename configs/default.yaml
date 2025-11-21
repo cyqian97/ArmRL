@@ -1,0 +1,2 @@
+test:
+  model_path: "./models/best_model/best_model.zip"

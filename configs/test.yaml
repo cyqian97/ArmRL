@@ -1,0 +1,29 @@
+env:
+  env_name: "PickPlaceCan"
+  robots: ["Panda"]
+  horizon: 100
+  camera_height: 64
+  camera_width: 64
+
+alg:
+  alg_name: "PPO"
+  learning_rate: 0.0003
+  n_steps: 128
+  batch_size: 64
+
+train:
+  n_envs: 2
+  device: "cuda"
+  total_timesteps: 1024
+  save_freq: 200
+  eval_freq: 100
+  model_save_path: "./results/test/"
+
+
+test:
+  model_path: "./results/test/best_model/best_model.zip" # Make sure this path matches the saved model path
+  n_episodes: 5
+  deterministic: true
+  save_video: true
+  result_path: "./results/test/test/"
+  video_fps: 20 # Normally should match control frequency

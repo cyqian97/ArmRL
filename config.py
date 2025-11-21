@@ -2,7 +2,7 @@
 Configuration options for faster PPO training with images
 
 Usage:
-    from training_config import Config
+    from config import Config
     config = Config()
     # Or with custom values:
     config = Config(n_envs=16, camera_height=64)
@@ -16,15 +16,15 @@ from pathlib import Path
 
 def load_config_from_yaml(
     yaml_path: str,
-) -> tuple["EnvConfig", "AlgConfig", "TrainConfig"]:
+) -> tuple["EnvConfig", "AlgConfig", "TrainConfig", "TestConfig"]:
     """
-    Load EnvConfig, AlgConfig, and TrainConfig from a YAML file.
+    Load EnvConfig, AlgConfig, TrainConfig, and TestConfig from a YAML file.
 
     Args:
         yaml_path: Path to the YAML configuration file
 
     Returns:
-        Tuple of (EnvConfig, AlgConfig, TrainConfig)
+        Tuple of (EnvConfig, AlgConfig, TrainConfig, TestConfig)
 
     Example YAML format:
         env:
@@ -37,12 +37,15 @@ def load_config_from_yaml(
         train:
           n_envs: 8
           device: "cuda"
+        test:
+          model_path: "./models/PPO_pickplace_final.zip"
+          n_episodes: 5
+          save_video: true
     """
     yaml_path = Path(yaml_path)
     if not yaml_path.exists():
         raise FileNotFoundError(f"Config file not found: {yaml_path}")
 
-    
     print(f"Loading config from: {yaml_path}\n")
     with open(yaml_path, "r") as f:
         config_dict = yaml.safe_load(f)
@@ -50,6 +53,7 @@ def load_config_from_yaml(
     env_cfg = EnvConfig(**config_dict.get("env", {}))
     alg_cfg = AlgConfig(**config_dict.get("alg", {}))
     train_cfg = TrainConfig(**config_dict.get("train", {}))
+    test_cfg = TestConfig(**config_dict.get("test", {}))
 
     print(env_cfg)
     print(alg_cfg)
@@ -57,7 +61,8 @@ def load_config_from_yaml(
     print(
         f"\tSteps per Update: {alg_cfg.n_steps} x {train_cfg.n_envs} = {alg_cfg.n_steps * train_cfg.n_envs:,}"
     )
-    return env_cfg, alg_cfg, train_cfg
+    print(test_cfg)
+    return env_cfg, alg_cfg, train_cfg, test_cfg
 
 
 class EnvConfig:
@@ -184,6 +189,45 @@ Training Configuration:
 """
 
 
+class TestConfig:
+    """Configuration for testing/evaluating trained models"""
+
+    def __init__(
+        self,
+        model_path="",
+        n_episodes=5,
+        deterministic=True,
+        render=False,
+        save_video=True,
+        result_path="./videos/",
+        video_fps=20,
+        device="cuda",
+    ):
+        self.model_path = model_path
+        self.n_episodes = n_episodes
+        self.deterministic = deterministic
+        self.render = render
+        self.save_video = save_video
+        self.result_path = result_path
+        self.video_fps = video_fps
+        self.device = device
+
+    def __repr__(self):
+        """Print configuration summary"""
+        return f"""
+Test Configuration:
+=======================
+	Model Path: {self.model_path}
+	N Episodes: {self.n_episodes}
+	Deterministic: {self.deterministic}
+	Render: {self.render}
+	Save Video: {self.save_video}
+	Video Path: {self.result_path}
+	Video FPS: {self.video_fps}
+	Device: {self.device}
+"""
+
+
 # ====================
 # OPTIMIZATION NOTES
 # ====================
@@ -197,10 +241,10 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python training_config.py <config.yaml>")
-        print("Example: python training_config.py configs/fast.yaml")
+        print("Usage: python config.py <config.yaml>")
+        print("Example: python config.py configs/fast.yaml")
         sys.exit(1)
 
     yaml_path = sys.argv[1]
 
-    env_cfg, alg_cfg, train_cfg = load_config_from_yaml(yaml_path)
+    env_cfg, alg_cfg, train_cfg, test_cfg = load_config_from_yaml(yaml_path)
