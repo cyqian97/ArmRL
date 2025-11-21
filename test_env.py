@@ -24,6 +24,7 @@ def make_env(config):
             camera_height=config.camera_height,
             camera_width=config.camera_width,
             horizon=config.horizon
+            
         )
     return _init
 

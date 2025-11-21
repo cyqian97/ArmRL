@@ -2,49 +2,78 @@
 Configuration options for faster PPO training with images
 
 Usage:
-    from training_config import TrainingConfig
-    config = TrainingConfig()
+    from training_config import Config
+    config = Config()
     # Or with custom values:
-    config = TrainingConfig(n_envs=16, camera_height=64)
+    config = Config(n_envs=16, camera_height=64)
+    # Or load from YAML:
+    env_cfg, alg_cfg, train_cfg = load_config_from_yaml("config.yaml")
 """
 
+import yaml
+from pathlib import Path
 
-class TrainingConfig:
-    """Training configuration with sensible defaults"""
+
+def load_config_from_yaml(
+    yaml_path: str,
+) -> tuple["EnvConfig", "AlgConfig", "TrainConfig"]:
+    """
+    Load EnvConfig, AlgConfig, and TrainConfig from a YAML file.
+
+    Args:
+        yaml_path: Path to the YAML configuration file
+
+    Returns:
+        Tuple of (EnvConfig, AlgConfig, TrainConfig)
+
+    Example YAML format:
+        env:
+          env_name: "PickPlaceCan"
+          robots: ["Panda"]
+          horizon: 200
+        alg:
+          learning_rate: 0.0003
+          n_steps: 512
+        train:
+          n_envs: 8
+          device: "cuda"
+    """
+    yaml_path = Path(yaml_path)
+    if not yaml_path.exists():
+        raise FileNotFoundError(f"Config file not found: {yaml_path}")
+
+    
+    print(f"Loading config from: {yaml_path}\n")
+    with open(yaml_path, "r") as f:
+        config_dict = yaml.safe_load(f)
+
+    env_cfg = EnvConfig(**config_dict.get("env", {}))
+    alg_cfg = AlgConfig(**config_dict.get("alg", {}))
+    train_cfg = TrainConfig(**config_dict.get("train", {}))
+
+    print(env_cfg)
+    print(alg_cfg)
+    print(train_cfg)
+    print(
+        f"\tSteps per Update: {alg_cfg.n_steps} x {train_cfg.n_envs} = {alg_cfg.n_steps * train_cfg.n_envs:,}"
+    )
+    return env_cfg, alg_cfg, train_cfg
+
+
+class EnvConfig:
+    """Environment configuration settings"""
 
     def __init__(
         self,
-        # Environment settings
         env_name="PickPlaceCan",
         robots=["Panda"],
         horizon=200,
         control_freq=20,
-        camera_height=84,  # 84 is standard, try 64 for more speed
+        camera_height=84,
         camera_width=84,
-        use_object_obs=False, 
+        use_object_obs=False,
         use_camera_obs=True,
-
-        # PPO hyperparameters
-        learning_rate=3e-4,
-        n_steps=512,  # Will be auto-adjusted based on n_envs
-        batch_size=64,
-        n_epochs=10,
-        gamma=0.99,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        ent_coef=0.001,
-
-        # Training settings
-        n_envs=8,  
-        device="cuda",  # "cuda" for GPU, "cpu" for CPU
-        total_timesteps=500000,
-        save_freq=10000, # Callbacks frequencies
-        eval_freq=5000,
-        model_save_path="./models/",
-        log_path="./logs/",
-        tensorboard_log="./tensorboard_logs/",
     ):
-        # Environment
         self.env_name = env_name
         self.robots = robots
         self.horizon = horizon
@@ -54,7 +83,41 @@ class TrainingConfig:
         self.use_object_obs = use_object_obs
         self.use_camera_obs = use_camera_obs
 
-        # PPO hyperparameters
+    def __repr__(self):
+        """Print configuration summary"""
+        return f"""
+Environment Configuration:
+=======================
+	Environment Name: {self.env_name}
+	Robots: {self.robots}
+	Horizon: {self.horizon}
+	Control Frequency: {self.control_freq} Hz
+	Camera Height: {self.camera_height}
+	Camera Width: {self.camera_width}
+	Image Size: {self.camera_height}x{self.camera_width}
+	Use Object Obs: {self.use_object_obs}
+	Use Camera Obs: {self.use_camera_obs}
+"""
+
+
+class AlgConfig:
+    """Algorithm configuration settings"""
+
+    def __init__(
+        self,
+        alg_name="PPO",
+        policy="CnnPolicy",
+        learning_rate=3e-4,
+        n_steps=512,
+        batch_size=64,
+        n_epochs=10,
+        gamma=0.99,
+        gae_lambda=0.95,
+        clip_range=0.2,
+        ent_coef=0.001,
+    ):
+        self.alg_name = alg_name
+        self.policy = policy
         self.learning_rate = learning_rate
         self.n_steps = n_steps
         self.batch_size = batch_size
@@ -64,9 +127,40 @@ class TrainingConfig:
         self.clip_range = clip_range
         self.ent_coef = ent_coef
 
-        # Training parameters
-        self.device = device        
+    def __repr__(self):
+        """Print configuration summary"""
+        return f"""
+Algorithm Configuration:
+=======================
+	Algorithm Name: {self.alg_name}
+    Policy: {self.policy}
+	Learning Rate: {self.learning_rate}
+	N Steps: {self.n_steps}
+	Batch Size: {self.batch_size}
+	N Epochs: {self.n_epochs}
+	Gamma: {self.gamma}
+	GAE Lambda: {self.gae_lambda}
+	Clip Range: {self.clip_range}
+	Entropy Coefficient: {self.ent_coef}
+"""
+
+
+class TrainConfig:
+    """Training configuration settings"""
+
+    def __init__(
+        self,
+        n_envs=8,
+        device="cuda",
+        total_timesteps=500000,
+        save_freq=10000,
+        eval_freq=5000,
+        model_save_path="./models/",
+        log_path="./logs/",
+        tensorboard_log="./tensorboard_logs/",
+    ):
         self.n_envs = n_envs
+        self.device = device
         self.total_timesteps = total_timesteps
         self.save_freq = save_freq
         self.eval_freq = eval_freq
@@ -79,81 +173,15 @@ class TrainingConfig:
         return f"""
 Training Configuration:
 =======================
-
-Environment Settings:
-  Environment Name: {self.env_name}
-  Robots: {self.robots}
-  Horizon: {self.horizon}
-  Control Frequency: {self.control_freq} Hz
-  Camera Height: {self.camera_height}
-  Camera Width: {self.camera_width}
-  Image Size: {self.camera_height}x{self.camera_width}
-  Use Object Obs: {self.use_object_obs}
-  Use Camera Obs: {self.use_camera_obs}
-
-PPO Hyperparameters:
-  Learning Rate: {self.learning_rate}
-  N Steps: {self.n_steps}
-  Steps per Update: {self.n_steps} x {self.n_envs} = {self.n_steps * self.n_envs:,}
-  Batch Size: {self.batch_size}
-  N Epochs: {self.n_epochs}
-  Gamma: {self.gamma}
-  GAE Lambda: {self.gae_lambda}
-  Clip Range: {self.clip_range}
-  Entropy Coefficient: {self.ent_coef}
-
-Training Settings:
-  Device: {self.device}
-  Parallel Envs: {self.n_envs}
-  Total Timesteps: {self.total_timesteps:,}
-  Save Frequency: {self.save_freq:,}
-  Eval Frequency: {self.eval_freq:,}
-
-Paths:
-  Model Save Path: {self.model_save_path}
-  Log Path: {self.log_path}
-  TensorBoard Log: {self.tensorboard_log}
+	Parallel Envs: {self.n_envs}
+	Device: {self.device}
+	Total Timesteps: {self.total_timesteps:,}
+	Save Frequency: {self.save_freq:,}
+	Eval Frequency: {self.eval_freq:,}
+	Model Save Path: {self.model_save_path}
+	Log Path: {self.log_path}
+	TensorBoard Log: {self.tensorboard_log}
 """
-
-
-# Pre-defined configurations for different scenarios
-
-class FastTrainingConfig(TrainingConfig):
-    """Optimized for maximum training speed"""
-    def __init__(self):
-        super().__init__(
-            n_envs=16,           # More parallel environments
-            camera_height=64,    # Smaller images
-            camera_width=64,
-            horizon=100,         # Shorter episodes
-            n_steps=256,         # Smaller steps (256 * 16 = 4096)
-            eval_freq=10000,     # Less frequent eval
-            save_freq=20000,     # Less frequent saves
-        )
-
-
-class HighQualityConfig(TrainingConfig):
-    """Optimized for better image quality and learning"""
-    def __init__(self):
-        super().__init__(
-            n_envs=8,
-            camera_height=128,   # Higher resolution
-            camera_width=128,
-            horizon=200,
-            total_timesteps=1000000,  # More training
-        )
-
-
-class CPUOnlyConfig(TrainingConfig):
-    """Optimized for CPU-only training"""
-    def __init__(self):
-        super().__init__(
-            n_envs=8,
-            camera_height=64,
-            camera_width=64,
-            device="cpu",
-            batch_size=32,       # Smaller batches for CPU
-        )
 
 
 # ====================
@@ -165,3 +193,14 @@ Memory Usage:
 - Main thread: MEM~8GB, GPU~3GB
 - Each env instance: MEM~4GB, GPU~1GB
 """
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 2:
+        print("Usage: python training_config.py <config.yaml>")
+        print("Example: python training_config.py configs/fast.yaml")
+        sys.exit(1)
+
+    yaml_path = sys.argv[1]
+
+    env_cfg, alg_cfg, train_cfg = load_config_from_yaml(yaml_path)

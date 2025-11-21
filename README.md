@@ -12,7 +12,7 @@ apt-get install -y libglib2.0-0
 
 conda create -n armrl python=3.12 -y
 conda activate armrl
-pip install mujoco robosuite "imageio[ffmpeg]" opencv-python
+pip install mujoco robosuite "imageio[ffmpeg]" opencv-python PyYAML
 pip install gymnasium stable-baselines3[extra] tensorboard
 ```
 
