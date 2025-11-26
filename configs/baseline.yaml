@@ -1,0 +1,19 @@
+env:
+  use_object_obs: true
+  use_camera_obs: false
+  has_renderer: false
+  has_offscreen_renderer: false
+
+alg:
+  policy: "MlpPolicy"
+
+train:
+  n_envs: 2
+  model_save_path: "./results/ppo_object_baseline/"
+
+test:
+  model_path: "./results/ppo_object_baseline/best_model/best_model.zip" # Make sure this path matches the saved model path
+  n_episodes: 5
+  deterministic: true
+  save_video: true
+  result_path: "./results/ppo_object_baseline/test/"

@@ -8,25 +8,47 @@ from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecTransposeImage
 
+from robosuite.controllers import load_composite_controller_config
 from env_wrapper import RobosuiteImageWrapper
 from config import EnvConfig, AlgConfig, TrainConfig, load_config_from_yaml
 
+import robosuite as suite
+from robosuite.wrappers import GymWrapper
 
 def make_env(env_cfg: EnvConfig):
     """Factory function to create environment"""
 
     def _init():
-        return RobosuiteImageWrapper(
-            env_name=env_cfg.env_name,
+        # return RobosuiteImageWrapper(
+        #     env_name=env_cfg.env_name,
+        #     robots=env_cfg.robots,
+        #     horizon=env_cfg.horizon,
+        #     control_freq=env_cfg.control_freq,
+        #     camera_height=env_cfg.camera_height,
+        #     camera_width=env_cfg.camera_width,
+        #     use_camera_obs=env_cfg.use_camera_obs,
+        #     use_object_obs=env_cfg.use_object_obs,
+        #     has_renderer=env_cfg.has_renderer,
+        #     has_offscreen_renderer=env_cfg.has_offscreen_renderer,
+        # )
+        controller_config = load_composite_controller_config(controller="BASIC")
+        env = suite.make(
+            env_cfg.env_name,
             robots=env_cfg.robots,
-            horizon=env_cfg.horizon,
+            gripper_types="default",
+            controller_configs=controller_config,
+            has_renderer=env_cfg.has_renderer,
+            has_offscreen_renderer=env_cfg.has_offscreen_renderer,
             control_freq=env_cfg.control_freq,
-            camera_height=env_cfg.camera_height,
-            camera_width=env_cfg.camera_width,
-            use_camera_obs=env_cfg.use_camera_obs,
+            horizon=env_cfg.horizon,
             use_object_obs=env_cfg.use_object_obs,
+            use_camera_obs=env_cfg.use_camera_obs,
+            camera_names="frontview",
+            camera_heights=env_cfg.camera_height,
+            camera_widths=env_cfg.camera_width,
+            reward_shaping=True,
         )
-
+        return GymWrapper(env)
     return _init
 
 
@@ -67,11 +89,14 @@ def train(config_path):
     env = SubprocVecEnv([make_env(env_cfg) for _ in range(train_cfg.n_envs)])
 
     # VecTransposeImage transposes images from (H, W, C) to (C, H, W) for CNN
-    env = VecTransposeImage(env)
+    # Only use VecTransposeImage if using camera observations
+    if env_cfg.use_camera_obs:
+        env = VecTransposeImage(env)
 
     # Create evaluation environment (single env is fine)
     eval_env = DummyVecEnv([make_env(env_cfg)])
-    eval_env = VecTransposeImage(eval_env)
+    if env_cfg.use_camera_obs:
+        eval_env = VecTransposeImage(eval_env)
 
     # Set up callbacks
     checkpoint_callback = CheckpointCallback(
@@ -108,6 +133,8 @@ def train(config_path):
             clip_range=alg_cfg.clip_range,
             ent_coef=alg_cfg.ent_coef,
             device=train_cfg.device,
+            use_sde=alg_cfg.use_sde,
+            sde_sample_freq=alg_cfg.sde_sample_freq,
         )
 
     elif alg_cfg.alg_name.upper() == "SAC":

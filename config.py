@@ -78,6 +78,8 @@ class EnvConfig:
         camera_width=84,
         use_object_obs=False,
         use_camera_obs=True,
+        has_renderer=False,
+        has_offscreen_renderer=True,
     ):
         self.env_name = env_name
         self.robots = robots
@@ -87,6 +89,8 @@ class EnvConfig:
         self.camera_width = camera_width
         self.use_object_obs = use_object_obs
         self.use_camera_obs = use_camera_obs
+        self.has_renderer=has_renderer
+        self.has_offscreen_renderer=has_offscreen_renderer
 
     def __repr__(self):
         """Print configuration summary"""
@@ -102,6 +106,8 @@ Environment Configuration:
 	Image Size: {self.camera_height}x{self.camera_width}
 	Use Object Obs: {self.use_object_obs}
 	Use Camera Obs: {self.use_camera_obs}
+    Has Renderer: {self.has_renderer}
+    Has Offscreen Renderer: {self.has_offscreen_renderer}
 """
 
 
@@ -131,6 +137,8 @@ class AlgConfig:
         self.gae_lambda = gae_lambda
         self.clip_range = clip_range
         self.ent_coef = ent_coef
+        self.use_sde=True
+        self.sde_sample_freq=8
 
     def __repr__(self):
         """Print configuration summary"""
@@ -147,6 +155,8 @@ Algorithm Configuration:
 	GAE Lambda: {self.gae_lambda}
 	Clip Range: {self.clip_range}
 	Entropy Coefficient: {self.ent_coef}
+    Use SDE Noise: {self.use_sde}
+    SDE Sample Freq: {self.sde_sample_freq}
 """
 
 
@@ -209,7 +219,7 @@ class TestConfig:
         self.render = render
         self.save_video = save_video
         self.result_path = result_path
-        self.video_fps = video_fps
+        self.video_fps = video_fps # Normally should match control frequency
         self.device = device
 
     def __repr__(self):
