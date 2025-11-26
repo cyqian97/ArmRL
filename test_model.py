@@ -12,22 +12,8 @@ import imageio
 import numpy as np
 from stable_baselines3 import PPO, SAC, TD3
 
-from env_wrapper import RobosuiteImageWrapper
-from config import EnvConfig, TestConfig, load_config_from_yaml
-
-
-def make_env(env_cfg: EnvConfig):
-    """Factory function to create environment"""
-    return RobosuiteImageWrapper(
-        env_name=env_cfg.env_name,
-        robots=env_cfg.robots,
-        horizon=env_cfg.horizon,
-        control_freq=env_cfg.control_freq,
-        camera_height=env_cfg.camera_height,
-        camera_width=env_cfg.camera_width,
-        use_camera_obs=env_cfg.use_camera_obs,
-        use_object_obs=env_cfg.use_object_obs,
-    )
+from env_wrapper import make_env_test
+from config import EnvConfig, AlgConfig, TrainConfig, load_config_from_yaml
 
 
 def detect_algorithm(model_path: str):
@@ -105,10 +91,10 @@ def run_test(config_path):
     print("Loading model...")
     model = AlgoClass.load(test_cfg.model_path, device=test_cfg.device)
     print("Model loaded successfully!")
-    
-    # Create environment
+
+    # Create environment with offscreen renderer enabled for video recording
     print("\nCreating environment...")
-    env = make_env(env_cfg)
+    env = make_env_test(env_cfg, force_offscreen_renderer=test_cfg.save_video)
     print("Environment created!")
 
     # Test the model
@@ -133,9 +119,14 @@ def run_test(config_path):
             obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
 
-            # Get frame for video
+            # Get frame for video by rendering the environment
             if test_cfg.save_video:
-                frame = obs.copy()
+                # Render from the environment (works for both camera and object obs)
+                frame = env.env.sim.render(
+                    camera_name="frontview",
+                    height=env_cfg.camera_height,
+                    width=env_cfg.camera_width
+                )
                 frame = np.flipud(frame)  # Flip image vertically
                 frames.append(frame)
 

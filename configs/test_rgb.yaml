@@ -17,13 +17,13 @@ train:
   total_timesteps: 1024
   save_freq: 200
   eval_freq: 100
-  model_save_path: "./results/test/"
+  model_save_path: "./results/test_rgb/"
 
 
 test:
-  model_path: "./results/test/best_model/best_model.zip" # Make sure this path matches the saved model path
+  model_path: "./results/test_rgb/best_model/best_model.zip" # Make sure this path matches the saved model path
   n_episodes: 5
   deterministic: true
   save_video: true
-  result_path: "./results/test/test/"
+  result_path: "./results/test_rgb/test/"
   video_fps: 20 # Normally should match control frequency

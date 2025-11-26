@@ -4,6 +4,7 @@ results/
 videos/
 tensorboard_logs/
 __pycache__/
+.vscode/
 
 *.mp4
 *.zip

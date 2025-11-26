@@ -8,7 +8,7 @@ alg:
   policy: "MlpPolicy"
 
 train:
-  n_envs: 2
+  n_envs: 16
   model_save_path: "./results/ppo_object_baseline/"
 
 test:
