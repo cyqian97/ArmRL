@@ -80,7 +80,7 @@ class EnvConfig:
 		camera_width=84,
 		has_renderer=False,
 		has_offscreen_renderer=True,
-        reward_shaping=True,
+		reward_shaping=True,
 	):
 		self.env_name = env_name
 		self.robots = robots
@@ -92,7 +92,7 @@ class EnvConfig:
 		self.camera_width = camera_width
 		self.has_renderer=has_renderer
 		self.has_offscreen_renderer=has_offscreen_renderer
-        self.reward_shaping=reward_shaping
+		self.reward_shaping=reward_shaping
 
 	def __repr__(self):
 		"""Print configuration summary"""
@@ -110,7 +110,7 @@ Environment Configuration:
 	Use Camera Obs: {self.use_camera_obs}
 	Has Renderer: {self.has_renderer}
 	Has Offscreen Renderer: {self.has_offscreen_renderer}
-    Reward Shaping: {self.reward_shaping}
+	Reward Shaping: {self.reward_shaping}
 """
 
 
@@ -170,7 +170,7 @@ class TrainConfig:
 		self,
 		n_envs=8,
 		device="cuda",
-		total_timesteps=500000,
+		total_timesteps=500_000,
 		save_freq=10000,
 		eval_freq=5000,
 		model_save_path="./models/",
