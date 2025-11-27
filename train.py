@@ -1,4 +1,5 @@
 import os
+import datetime
 import argparse
 import shutil
 import imageio
@@ -6,10 +7,15 @@ import numpy as np
 from stable_baselines3 import PPO, SAC, TD3
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
 from stable_baselines3.common.noise import NormalActionNoise
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecTransposeImage
+from stable_baselines3.common.vec_env import (
+    DummyVecEnv,
+    SubprocVecEnv,
+    VecTransposeImage,
+)
 from config import EnvConfig, AlgConfig, TrainConfig, load_config_from_yaml
 
 from env_wrapper import make_env
+
 
 def parse_args():
     """Parse command line arguments"""
@@ -37,12 +43,13 @@ Examples:
     return parser.parse_args()
 
 
-
 def train(config_path):
     """Main training function"""
     # Load configuration from YAML
     env_cfg, alg_cfg, train_cfg, _ = load_config_from_yaml(config_path)
-    
+    if train_cfg.exp_name == "":
+        train_cfg.exp_name = f"{alg_cfg.alg_name.lower()}_{'oobs' if env_cfg.use_object_obs else 'cobs'}_{env_cfg.env_name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
     # Create the environment with parallel processes
     print(f"Creating {train_cfg.n_envs} parallel environments...")
     env = SubprocVecEnv([make_env(env_cfg) for _ in range(train_cfg.n_envs)])
@@ -60,14 +67,16 @@ def train(config_path):
     # Set up callbacks
     checkpoint_callback = CheckpointCallback(
         save_freq=train_cfg.save_freq,
-        save_path=train_cfg.model_save_path,
+        save_path=os.path.join(train_cfg.result_save_path, train_cfg.exp_name),
         name_prefix=f"{alg_cfg.alg_name}_{env_cfg.env_name}",
     )
 
     eval_callback = EvalCallback(
         eval_env,
-        best_model_save_path=f"{train_cfg.model_save_path}best_model",
-        log_path=train_cfg.log_path,
+        best_model_save_path=os.path.join(
+            train_cfg.result_save_path, train_cfg.exp_name, "best_model"
+        ),
+        log_path=os.path.join(train_cfg.result_save_path, train_cfg.exp_name, "log"),
         eval_freq=train_cfg.eval_freq,
         deterministic=True,
         render=False,
@@ -82,7 +91,7 @@ def train(config_path):
             alg_cfg.policy,
             env,
             verbose=1,
-            tensorboard_log=train_cfg.tensorboard_log,
+            tensorboard_log=os.path.join(train_cfg.tensorboard_log, train_cfg.exp_name),
             learning_rate=alg_cfg.learning_rate,
             n_steps=alg_cfg.n_steps,
             batch_size=alg_cfg.batch_size,
@@ -102,13 +111,15 @@ def train(config_path):
             alg_cfg.policy,
             env,
             verbose=1,
-            tensorboard_log=train_cfg.tensorboard_log,
+            tensorboard_log=os.path.join(train_cfg.tensorboard_log, train_cfg.exp_name),
             learning_rate=alg_cfg.learning_rate,
-            buffer_size=100000,  # Replay buffer size
+            buffer_size=1000000,  # Replay buffer size
             batch_size=alg_cfg.batch_size,
             gamma=alg_cfg.gamma,
             tau=0.005,  # Soft update coefficient
             ent_coef="auto",  # Automatic entropy tuning
+            use_sde=alg_cfg.use_sde,
+            sde_sample_freq=alg_cfg.sde_sample_freq,
             device=train_cfg.device,
         )
 
@@ -123,7 +134,7 @@ def train(config_path):
             alg_cfg.policy,
             env,
             verbose=1,
-            tensorboard_log=train_cfg.tensorboard_log,
+            tensorboard_log=os.path.join(train_cfg.tensorboard_log, train_cfg.exp_name),
             learning_rate=alg_cfg.learning_rate,
             buffer_size=100000,  # Replay buffer size
             batch_size=alg_cfg.batch_size,
@@ -135,6 +146,15 @@ def train(config_path):
     else:
         raise ValueError(f"Unknown algorithm: {alg_cfg.alg_name}")
 
+    # Copy config file to model save directory
+    config_filename = os.path.basename(config_path)
+    if not os.path.exists(os.path.join(train_cfg.result_save_path, train_cfg.exp_name)):
+        os.makedirs(os.path.join(train_cfg.result_save_path, train_cfg.exp_name))
+    dest_config_path = os.path.join(
+        train_cfg.result_save_path, train_cfg.exp_name, config_filename
+    )
+    shutil.copy2(config_path, dest_config_path)
+
     # Train the model
     print("Starting training...")
     model.learn(
@@ -142,19 +162,17 @@ def train(config_path):
         callback=[checkpoint_callback, eval_callback],
         progress_bar=True,
     )
-    # Copy config file to model save directory
-    config_filename = os.path.basename(config_path)
-    dest_config_path = os.path.join(train_cfg.model_save_path, config_filename)
-    shutil.copy2(config_path, dest_config_path)
     print("Training completed!")
+
 
 if __name__ == "__main__":
     # Parse command line arguments
     args = parse_args()
-    
+
     # Start training
     train(args.config)
-    
+
     # Test the trained model
     from test_model import run_test
+
     run_test(args.config)

@@ -168,22 +168,23 @@ class TrainConfig:
 
 	def __init__(
 		self,
+		exp_name = "",
 		n_envs=8,
 		device="cuda",
 		total_timesteps=500_000,
 		save_freq=10000,
 		eval_freq=5000,
-		model_save_path="./models/",
+		result_save_path="./results/",
 		log_path="./logs/",
 		tensorboard_log="./tensorboard_logs/",
 	):
+		self.exp_name = exp_name
 		self.n_envs = n_envs
 		self.device = device
 		self.total_timesteps = total_timesteps
 		self.save_freq = save_freq
 		self.eval_freq = eval_freq
-		self.model_save_path = model_save_path
-		self.log_path = log_path
+		self.result_save_path = result_save_path
 		self.tensorboard_log = tensorboard_log
 
 	def __repr__(self):
@@ -196,8 +197,7 @@ Training Configuration:
 	Total Timesteps: {self.total_timesteps:,}
 	Save Frequency: {self.save_freq:,}
 	Eval Frequency: {self.eval_freq:,}
-	Model Save Path: {self.model_save_path}
-	Log Path: {self.log_path}
+	Result Save Path: {self.result_save_path}
 	TensorBoard Log: {self.tensorboard_log}
 """
 
@@ -212,7 +212,7 @@ class TestConfig:
 		deterministic=True,
 		render=False,
 		save_video=True,
-		result_path="./videos/",
+		result_save_path="./results/",
 		video_fps=20,
 		device="cuda",
 	):
@@ -221,7 +221,7 @@ class TestConfig:
 		self.deterministic = deterministic
 		self.render = render
 		self.save_video = save_video
-		self.result_path = result_path
+		self.result_save_path = result_save_path
 		self.video_fps = video_fps # Normally should match control frequency
 		self.device = device
 
@@ -235,7 +235,7 @@ Test Configuration:
 	Deterministic: {self.deterministic}
 	Render: {self.render}
 	Save Video: {self.save_video}
-	Video Path: {self.result_path}
+	Result Save Path: {self.result_save_path}
 	Video FPS: {self.video_fps}
 	Device: {self.device}
 """

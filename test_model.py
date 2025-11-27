@@ -73,10 +73,10 @@ def run_test(config_path):
 
     # Generate video filename
     model_basename = os.path.splitext(os.path.basename(test_cfg.model_path))[0]
-    video_filename = os.path.join(test_cfg.result_path, f"{model_basename}.mp4")
+    video_filename = os.path.join(test_cfg.result_save_path, f"{model_basename}.mp4")
 
     # Create video directory if needed
-    os.makedirs(test_cfg.result_path, exist_ok=True)
+    os.makedirs(test_cfg.result_save_path, exist_ok=True)
 
     print(f"\n{'='*60}")
     print(f"Testing Model: {test_cfg.model_path}")
@@ -178,7 +178,7 @@ def run_test(config_path):
 
     # Copy config file to the test result directory
     config_filename = os.path.basename(config_path)
-    dest_config_path = os.path.join(test_cfg.result_path, config_filename)
+    dest_config_path = os.path.join(test_cfg.result_save_path, config_filename)
     shutil.copy2(config_path, dest_config_path)
     print("Testing completed!")
 

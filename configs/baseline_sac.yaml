@@ -7,17 +7,19 @@ env:
   reward_shaping: true
 
 alg:
+  alg_name: "SAC"
+  batch_size: 256
   policy: "MlpPolicy"
 
 train:
-  exp_name: "ppo_oobs_Lift"
-  n_envs: 16
+  exp_name: "sac_oobs_Lift"
+  n_envs: 8
   total_timesteps: 5_000_000
   result_save_path: "./results/"
 
 test:
-  model_path: "./results/ppo_oobs_Lift/best_model/best_model.zip" # Make sure this path matches the saved model path
+  model_path: "./results/sac_oobs_Lift/best_model/best_model.zip" # Make sure this path matches the saved model path
   n_episodes: 5
   deterministic: true
   save_video: true
-  result_save_path: "./results/ppo_oobs_Lift/best_model/test/"
+  result_save_path: "./results/sac_oobs_Lift/best_model/test/"
