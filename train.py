@@ -49,6 +49,11 @@ def train(config_path):
     env_cfg, alg_cfg, train_cfg, _ = load_config_from_yaml(config_path)
     if train_cfg.exp_name == "":
         train_cfg.exp_name = f"{alg_cfg.alg_name.lower()}_{'oobs' if env_cfg.use_object_obs else 'cobs'}_{env_cfg.env_name}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
+    if os.path.exists(os.path.join(train_cfg.result_save_path, train_cfg.exp_name)):
+        raise FileExistsError(f"Experiment directory already exists: {os.path.join(train_cfg.result_save_path, train_cfg.exp_name)}")
+    else:
+        os.makedirs(os.path.join(train_cfg.result_save_path, train_cfg.exp_name))
 
     # Create the environment with parallel processes
     print(f"Creating {train_cfg.n_envs} parallel environments...")
@@ -148,8 +153,6 @@ def train(config_path):
 
     # Copy config file to model save directory
     config_filename = os.path.basename(config_path)
-    if not os.path.exists(os.path.join(train_cfg.result_save_path, train_cfg.exp_name)):
-        os.makedirs(os.path.join(train_cfg.result_save_path, train_cfg.exp_name))
     dest_config_path = os.path.join(
         train_cfg.result_save_path, train_cfg.exp_name, config_filename
     )

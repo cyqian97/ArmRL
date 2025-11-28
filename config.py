@@ -210,8 +210,9 @@ class TestConfig:
 		model_path="",
 		n_episodes=5,
 		deterministic=True,
-		render=False,
 		save_video=True,
+		video_height=512,
+		video_width=512,
 		result_save_path="./results/",
 		video_fps=20,
 		device="cuda",
@@ -219,8 +220,9 @@ class TestConfig:
 		self.model_path = model_path
 		self.n_episodes = n_episodes
 		self.deterministic = deterministic
-		self.render = render
 		self.save_video = save_video
+		self.video_height = video_height
+		self.video_width = video_width
 		self.result_save_path = result_save_path
 		self.video_fps = video_fps # Normally should match control frequency
 		self.device = device
@@ -233,7 +235,6 @@ Test Configuration:
 	Model Path: {self.model_path}
 	N Episodes: {self.n_episodes}
 	Deterministic: {self.deterministic}
-	Render: {self.render}
 	Save Video: {self.save_video}
 	Result Save Path: {self.result_save_path}
 	Video FPS: {self.video_fps}

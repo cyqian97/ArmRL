@@ -1,7 +1,10 @@
 env:
   env_name: "Lift"
-  use_object_obs: true
-  use_camera_obs: false
+  horizon: 100
+  use_object_obs: false
+  use_camera_obs: True
+  camera_height: 128
+  camera_width: 128
   has_renderer: false
   has_offscreen_renderer: false
   reward_shaping: true
@@ -9,17 +12,17 @@ env:
 alg:
   alg_name: "SAC"
   batch_size: 256
-  policy: "MlpPolicy"
+  policy: "CnnPolicy"
 
 train:
-  exp_name: "sac_oobs_Lift"
-  n_envs: 8
-  total_timesteps: 5_000_000
+  exp_name: "sac_cobs_Lift"
+  n_envs: 16
+  total_timesteps: 10_000_000
   result_save_path: "./results/"
 
 test:
-  model_path: "./results/sac_oobs_Lift/best_model/best_model.zip" # Make sure this path matches the saved model path
+  model_path: "./results/sac_cobs_Lift/best_model/best_model.zip" # Make sure this path matches the saved model path
   n_episodes: 5
   deterministic: true
   save_video: true
-  result_save_path: "./results/sac_oobs_Lift/best_model/test/"
+  result_save_path: "./results/sac_cobs_Lift/best_model/test/"

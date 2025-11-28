@@ -124,8 +124,8 @@ def run_test(config_path):
                 # Render from the environment (works for both camera and object obs)
                 frame = env.env.sim.render(
                     camera_name="frontview",
-                    height=env_cfg.camera_height,
-                    width=env_cfg.camera_width
+                    height=test_cfg.video_height,
+                    width=test_cfg.video_width
                 )
                 frame = np.flipud(frame)  # Flip image vertically
                 frames.append(frame)
