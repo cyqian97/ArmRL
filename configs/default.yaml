@@ -1,2 +1,6 @@
+train:
+  exp_name: "default_config"
+
 test:
-  model_path: "./models/best_model/best_model.zip"
+  model_path: "./results/default_config/best_model/best_model.zip" # Make sure this path matches the saved model path
+  result_save_path: "./results/default_config/best_model/test/"

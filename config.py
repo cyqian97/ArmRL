@@ -70,7 +70,7 @@ class EnvConfig:
 
 	def __init__(
 		self,
-		env_name="PickPlaceCan",
+		env_name="Lift",
 		robots=["Panda"],
 		horizon=200,
 		control_freq=20,

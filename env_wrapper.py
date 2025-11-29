@@ -77,7 +77,7 @@ class RobosuiteImageWrapper(gym.Env):
     
     def __init__(
         self,
-        env_name="PickPlaceCan",
+        env_name="Lift",
         robots=["Panda"],
         camera_height=84,
         camera_width=84,
