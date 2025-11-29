@@ -123,12 +123,14 @@ class AlgConfig:
 		policy="CnnPolicy",
 		learning_rate=3e-4,
 		n_steps=512,
-		batch_size=64,
+		batch_size=-1,
 		n_epochs=10,
 		gamma=0.99,
 		gae_lambda=0.95,
 		clip_range=0.2,
 		ent_coef=0.001,
+		use_sde=True,
+		sde_sample_freq=8,
 	):
 		self.alg_name = alg_name
 		self.policy = policy
@@ -140,8 +142,15 @@ class AlgConfig:
 		self.gae_lambda = gae_lambda
 		self.clip_range = clip_range
 		self.ent_coef = ent_coef
-		self.use_sde=True
-		self.sde_sample_freq=8
+		self.use_sde=use_sde
+		self.sde_sample_freq=sde_sample_freq
+		if self.batch_size == -1:
+			if self.alg_name.upper() == "PPO":
+				self.batch_size = 64  # Default PPO batch size
+			elif self.alg_name.upper() == "SAC":
+				self.batch_size = 256  # Default SAC batch size
+			elif self.alg_name.upper() == "TD3":
+				self.batch_size = 256  # Default TD3 batch size
 
 	def __repr__(self):
 		"""Print configuration summary"""
